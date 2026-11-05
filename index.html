@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Seu nome ou seu preço? · Luísa Panazzolo</title>
+<meta name="description" content="Um diagnóstico rápido para arquitetas: o seu cliente te escolhe pelo seu nome ou pelo seu preço?">
+<style>
+  :root{
+    --creme:#F4F0EE; --terracota:#9E3C22; --vinho:#77220C; --marrom:#3C2E22;
+    --bege:#D9CCC3; --cinza:#8C8474; --branco:#FBF9F7;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--creme);color:var(--marrom);font-family:Arial,Helvetica,sans-serif;
+       line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:20px 22px 32px}
+  header{display:flex;align-items:center;justify-content:space-between;height:40px}
+  .logo{font-size:15px;letter-spacing:.04em;color:var(--marrom)}
+  .logo b{color:var(--terracota);font-weight:normal}
+  .count{font-size:12px;color:var(--cinza);letter-spacing:.08em}
+  .bar{height:3px;background:var(--bege);border-radius:3px;margin:6px 0 28px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--terracota);transition:width .35s ease}
+  main{flex:1;display:flex;flex-direction:column}
+  .screen{animation:in .3s ease}
+  @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--terracota);margin-bottom:12px}
+  h1{font-size:30px;line-height:1.15;font-weight:normal;color:var(--marrom);margin-bottom:16px}
+  h2{font-size:22px;line-height:1.25;font-weight:normal;margin-bottom:8px}
+  .hint{font-size:14px;color:var(--cinza);margin-bottom:22px}
+  p{font-size:16px;margin-bottom:14px}
+  .opts{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+  .opt{display:block;width:100%;text-align:left;font:inherit;font-size:16px;color:var(--marrom);
+       background:var(--branco);border:1px solid var(--bege);border-radius:10px;padding:15px 16px;cursor:pointer;
+       transition:border-color .15s, background .15s}
+  .opt:hover{border-color:var(--terracota)}
+  .opt.sel{border-color:var(--terracota);background:#F7E9E3}
+  textarea,input{width:100%;font:inherit;font-size:16px;color:var(--marrom);background:var(--branco);
+       border:1px solid var(--bege);border-radius:10px;padding:14px 16px;outline:none}
+  textarea{min-height:120px;resize:vertical}
+  textarea:focus,input:focus{border-color:var(--terracota)}
+  label.f{display:block;font-size:13px;color:var(--cinza);margin:14px 0 6px}
+  label.f:first-of-type{margin-top:0}
+  .other{margin-top:10px;display:none}
+  .actions{display:flex;gap:12px;align-items:center;margin-top:26px}
+  .btn{font:inherit;font-size:16px;border:0;border-radius:999px;padding:15px 28px;cursor:pointer;
+       background:var(--terracota);color:#fff;transition:background .15s, opacity .15s}
+  .btn:hover{background:var(--vinho)}
+  .btn[disabled]{opacity:.35;cursor:default}
+  .btn.full{width:100%;text-align:center;display:block;text-decoration:none}
+  .back{font:inherit;font-size:14px;background:none;border:0;color:var(--cinza);cursor:pointer;padding:8px 4px}
+  .consent{font-size:12px;color:var(--cinza);margin-top:14px}
+  .err{font-size:13px;color:var(--vinho);margin-top:10px;min-height:18px}
+  .result .perfil{display:inline-block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+       color:var(--terracota);border:1px solid var(--terracota);border-radius:999px;padding:6px 12px;margin-bottom:18px}
+  .result .espelho{font-size:21px;line-height:1.35;margin-bottom:18px}
+  .result .bloco{border-left:3px solid var(--terracota);padding-left:14px;margin:18px 0}
+  .result .bloco small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--cinza);margin-bottom:4px}
+  .result .bloco p{margin:0}
+  .fine{font-size:12px;color:var(--cinza);text-align:center;margin-top:14px}
+  footer{font-size:11px;color:var(--cinza);text-align:center;margin-top:28px;letter-spacing:.06em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">l<b>.</b>panazzolo</div>
+    <div class="count" id="count"></div>
+  </header>
+  <div class="bar"><i id="bar"></i></div>
+  <main id="app"></main>
+  <footer>Luísa Panazzolo · mentora de arquitetas</footer>
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURAÇÃO — a Luisa (ou a Luna) preenche aqui
+   ============================================================ */
+const CONFIG = {
+  // URL do app da Web do Google Apps Script (planilha). Vazio = modo teste (só mostra no console).
+  PLANILHA_URL: "",
+  // WhatsApp da Luisa, só números, com 55 + DDD. Ex.: "5511999998888"
+  WHATSAPP: "5545999673867",
+};
+
+/* ============================================================
+   PERGUNTAS — 12 do núcleo + 1 aberta final (PDF "O funil de quiz")
+   Teto: 100 pontos. Momento 25 · Dor 25 · Capacidade e decisão 30 · Tentativas 15 · Contexto 5.
+   ============================================================ */
+const PERGUNTAS = [
+  { id:"q1", familia:"Contexto", tipo:"aberta", obrigatoria:true,
+    texto:"Como você descreve o seu trabalho hoje, em uma frase?",
+    hint:"Do jeito que você explicaria para alguém que acabou de conhecer.",
+    placeholder:"Ex.: faço projetos residenciais de alto padrão em Curitiba" },
+
+  { id:"q2", familia:"Contexto", tipo:"escolha",
+    texto:"Há quanto tempo você assina os próprios projetos?",
+    opcoes:[["Menos de 2 anos",1],["De 2 a 5 anos",3],["De 5 a 10 anos",5],["Mais de 10 anos",5]] },
+
+  { id:"q3", familia:"Momento", tipo:"escolha",
+    texto:"Quanto o seu escritório fatura por mês, em média?",
+    hint:"Uma média dos últimos meses já basta.",
+    opcoes:[["Ainda não tenho um faturamento constante",2],["Até R$ 5 mil",4],["De R$ 5 mil a R$ 10 mil",7],["De R$ 10 mil a R$ 30 mil",11],["Acima de R$ 30 mil",15]] },
+
+  { id:"q4", familia:"Momento", tipo:"escolha",
+    texto:"Como os clientes chegam até você hoje?",
+    opcoes:[["Ainda chega pouca gente",2],["Quase só por indicação, quando aparece",5],["Por indicação e, às vezes, pelo Instagram",7],["Chega contato, mas a maioria compara preço e não fecha",10]] },
+
+  { id:"q5", familia:"Dor", tipo:"escolha", outro:true,
+    texto:"O que mais te trava hoje?",
+    opcoes:[["O cliente chega, mas pede desconto",15],["Não sei como mostrar o meu valor através do digital",13],["Não sei como transformar os meus projetos em posicionamento forte",14],["Eu posto, mas o perfil não traz cliente",10],["Não tenho tempo nem constância para postar",6],["Outra coisa",4]] },
+
+  { id:"q6", familia:"Dor", tipo:"escolha",
+    texto:"Há quanto tempo isso te incomoda?",
+    opcoes:[["Comecei a perceber agora",3],["Há alguns meses",6],["Há mais de um ano",9],["Há anos, e eu já convivo com isso",10]] },
+
+  { id:"q7", familia:"Tentativas", tipo:"escolha",
+    texto:"O que você já tentou para resolver?",
+    opcoes:[["Nada ainda",4],["Tentei sozinha: postar mais, mudar o feed",8],["Fiz curso de conteúdo ou de Instagram e não mudou muito",12],["Contratei social media ou designer e não tive resultado",15]] },
+
+  { id:"q8", familia:"Tentativas", tipo:"aberta", obrigatoria:false,
+    texto:"Na sua leitura, por que não funcionou?",
+    hint:"Pode ser curto. Se ainda não tentou nada, pode pular.",
+    placeholder:"Ex.: a profissional não me entendeu" },
+
+  { id:"q9", familia:"Desejo", tipo:"escolha", outro:true,
+    texto:"Se você mudasse isso, o que mudaria no seu escritório em 6 meses?",
+    hint:"Não pontua: serve para eu entender o que é importante para você.",
+    opcoes:[["Teria caixa para delegar e me sentiria menos cansada",0],["Teria mais renda para mim",0],["Conseguiria investir em um espaço físico",0],["Atenderia menos clientes, cobrando mais, e teria mais tempo livre",0],["Outro",0]] },
+
+  { id:"q10", familia:"Capacidade", tipo:"escolha",
+    texto:"O quanto resolver isso é prioridade para você hoje?",
+    opcoes:[["Não é prioridade agora",0],["É importante, mas tem coisa na frente",4],["É uma das prioridades",8],["É a prioridade número um",10]] },
+
+  { id:"q11", familia:"Decisão", tipo:"escolha",
+    texto:"A decisão de investir no seu posicionamento é só sua ou de mais alguém?",
+    opcoes:[["Minha e da minha sócia (ou sócio)",7],["Somente minha",10],["Minha e do meu marido",6]] },
+
+  { id:"q12", familia:"Capacidade", tipo:"escolha",
+    texto:"Você já investiu em algo para resolver isso?",
+    opcoes:[["Nunca investi",3],["Investi pouco, uma vez",6],["Já investi e sigo investindo",10]] },
+
+  { id:"q13", familia:"Aberta final", tipo:"aberta", obrigatoria:false,
+    texto:"Tem mais alguma coisa que você acha importante eu saber antes da gente conversar?",
+    hint:"Opcional.",
+    placeholder:"Fique à vontade" },
+];
+
+/* O espelho: a primeira frase da tela de resultado muda conforme a dor escolhida (q5). */
+const ESPELHO = {
+  "O cliente chega, mas pede desconto":
+    "Pelo que você respondeu, o seu problema não é falta de cliente. É que o cliente chega comparando a sua obra com a de outra arquiteta, e comparação termina em preço.",
+  "Não sei como mostrar o meu valor através do digital":
+    "Pelo que você respondeu, o seu problema não é o seu trabalho. É que aquilo que te faz valer mais não aparece em lugar nenhum do seu perfil.",
+  "Não sei como transformar os meus projetos em posicionamento forte":
+    "Pelo que você respondeu, o seu problema não está nos projetos. É que você tenta se destacar pela obra, e obra outra arquiteta também tem. O que te destaca é você.",
+  "Eu posto, mas o perfil não traz cliente":
+    "Pelo que você respondeu, o seu problema não é postar pouco. É que o seu perfil mostra a obra, e não você, e obra outra arquiteta também tem.",
+  "Não tenho tempo nem constância para postar":
+    "Pelo que você respondeu, o seu problema não é tempo. É que, sem saber o que precisa ser dito, todo post vira esforço, e esforço não vira constância.",
+  "Outra coisa":
+    "Pelo que você respondeu, o que te trava não é falta de capacidade. É que o valor do seu trabalho ainda não chega até quem te procura.",
+};
+
+/* As quatro faixas. Caminho A = sessão estratégica gratuita. Caminho B = análise cobrada. */
+const FAIXAS = [
+  { min:80, nome:"Pronta agora", caminho:"A",
+    perfil:"A arquiteta pronta para o próximo patamar",
+    causa:"A percepção de valor do seu perfil está construída em cima do projeto, e não em cima de você.",
+    jogo:"Você já tem estrutura e já tem procura. Enquanto o perfil vender só a obra, cada cliente novo vai chegar negociando, e o próximo patamar vai continuar a um passo de distância.",
+    convite:"Li o seu cenário e tem uma coisa nele que eu quero te mostrar ao vivo, porque no texto não passa. A leitura completa é uma conversa individual comigo, sem custo.",
+    botao:"Quero a minha leitura completa",
+    msg:"Oi, Luísa! Fiz o quiz e quero a minha leitura completa." },
+  { min:60, nome:"Quase lá", caminho:"B",
+    perfil:"A arquiteta que já sabe que vale mais",
+    causa:"O que te torna insubstituível (como você interpreta, decide e conduz) fica invisível, porque o perfil só mostra o resultado final.",
+    jogo:"Falta pouco, mas é o pouco que define o preço. Sem nomear o que é só seu, você segue sendo escolhida pela estética e cobrada pela média do mercado.",
+    convite:"A leitura completa do seu cenário é um encontro individual comigo, pago, com escopo e duração definidos. Nele eu abro o que o seu perfil está comunicando hoje e qual é o caminho para mudar isso.",
+    botao:"Quero agendar a análise completa",
+    msg:"Oi, Luísa! Fiz o quiz e quero saber como funciona a análise completa." },
+  { min:35, nome:"Ainda não", caminho:"B",
+    perfil:"A arquiteta construindo a própria base",
+    causa:"A sua comunicação ainda depende da obra para provar o seu valor, e por isso cada post parece precisar ser perfeito.",
+    jogo:"Quanto mais tempo o perfil fica só no portfólio, mais ele te coloca na mesma prateleira de quem cobra menos. Mudar isso cedo custa muito menos do que mudar depois.",
+    convite:"Se você quiser entender o seu cenário com profundidade, a leitura completa é um encontro individual comigo, pago, com escopo e duração definidos.",
+    botao:"Quero saber sobre a análise completa",
+    msg:"Oi, Luísa! Fiz o quiz e quero saber como funciona a análise completa." },
+  { min:0, nome:"Outro caminho", caminho:"B",
+    perfil:"A arquiteta no começo da construção",
+    causa:"Antes do posicionamento, o seu momento pede base: tempo, prioridade e clareza sobre o escritório que você quer ter.",
+    jogo:"Nada aqui está perdido. Começar a mostrar o seu jeito de pensar desde já, e não só a obra pronta, é o que vai te poupar de competir por preço lá na frente.",
+    convite:"Se fizer sentido para você, a leitura completa é um encontro individual comigo, pago, com escopo definido, para olhar o seu momento com calma.",
+    botao:"Quero conversar sobre o meu momento",
+    msg:"Oi, Luísa! Fiz o quiz e queria conversar sobre o meu momento." },
+];
+
+const MSG_WHATSAPP = "Oi, Luísa! Fiz o diagnóstico e quero receber uma leitura completa.";
+
+/* ============================================================
+   MOTOR
+   ============================================================ */
+const app = document.getElementById("app");
+const bar = document.getElementById("bar");
+const count = document.getElementById("count");
+const respostas = {};      // id -> {texto, pontos}
+const outros = {};         // id -> texto do "Outra coisa"
+let passo = -1;            // -1 = abertura; 0..n-1 = perguntas; n = captura; n+1 = resultado
+const N = PERGUNTAS.length;
+const inicio = new Date();
+
+function progresso(){
+  const p = passo < 0 ? 0 : Math.min(passo, N) / (N + 1);
+  bar.style.width = (p * 100) + "%";
+  count.textContent = (passo >= 0 && passo < N) ? `${passo+1} de ${N}` : "";
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function render(){
+  progresso();
+  window.scrollTo(0,0);
+  if (passo < 0) return abertura();
+  if (passo < N) return pergunta(PERGUNTAS[passo]);
+  if (passo === N) return captura();
+}
+
+function abertura(){
+  app.innerHTML = `<div class="screen">
+    <div class="kicker">Diagnóstico para arquitetas</div>
+    <h1>O seu cliente te escolhe pelo seu nome ou pelo seu preço?</h1>
+    <p>Responda 13 perguntas rápidas sobre o seu momento e entenda por que você ainda não gera percepção de valor no seu nome.</p>
+    <p class="hint">Leva cerca de 3 minutos. Não existe resposta certa: quanto mais honesta, melhor o diagnóstico.</p>
+    <div class="actions"><button class="btn" id="go">Começar</button></div>
+  </div>`;
+  document.getElementById("go").onclick = () => { passo = 0; render(); };
+}
+
+function pergunta(q){
+  const r = respostas[q.id];
+  let corpo = "";
+  if (q.tipo === "escolha"){
+    corpo = `<div class="opts">${q.opcoes.map(([t],i)=>
+      `<button class="opt ${r && r.texto===t ? "sel":""}" data-i="${i}">${esc(t)}</button>`).join("")}</div>
+      ${q.outro ? `<div class="other" id="other"><input id="otherTxt" placeholder="Conta em poucas palavras" value="${esc(outros[q.id]||"")}"></div>`:""}`;
+  } else {
+    corpo = `<textarea id="txt" placeholder="${esc(q.placeholder||"")}">${esc(r ? r.texto : "")}</textarea>`;
+  }
+  app.innerHTML = `<div class="screen">
+    <h2>${esc(q.texto)}</h2>
+    ${q.hint ? `<div class="hint">${esc(q.hint)}</div>` : `<div style="height:14px"></div>`}
+    ${corpo}
+    <div class="actions">
+      <button class="back" id="back">← voltar</button>
+      ${q.tipo==="aberta" || q.outro ? `<button class="btn" id="next">Continuar</button>` : ""}
+    </div>
+  </div>`;
+  document.getElementById("back").onclick = () => { passo--; render(); };
+
+  if (q.tipo === "escolha"){
+    const otherBox = document.getElementById("other");
+    const ultima = q.opcoes[q.opcoes.length-1][0];
+    const showOther = () => { if (otherBox) otherBox.style.display = (q.outro && respostas[q.id]?.texto === ultima) ? "block" : "none"; };
+    showOther();
+    const next = document.getElementById("next");
+    if (next) next.disabled = !respostas[q.id];
+    app.querySelectorAll(".opt").forEach(b => b.onclick = () => {
+      const [t,p] = q.opcoes[+b.dataset.i];
+      respostas[q.id] = {texto:t, pontos:p};
+      app.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel")); b.classList.add("sel");
+      if (q.outro){ showOther(); next.disabled = false; if (t===ultima) document.getElementById("otherTxt").focus(); }
+      else setTimeout(()=>{ passo++; render(); }, 220);
+    });
+    if (next) next.onclick = () => {
+      const o = document.getElementById("otherTxt");
+      if (o) outros[q.id] = o.value.trim();
+      passo++; render();
+    };
+  } else {
+    const txt = document.getElementById("txt"), next = document.getElementById("next");
+    const check = () => { next.disabled = q.obrigatoria && txt.value.trim().length < 2; };
+    txt.oninput = check; check(); txt.focus();
+    next.onclick = () => { respostas[q.id] = {texto: txt.value.trim(), pontos: 0}; passo++; render(); };
+  }
+}
+
+function captura(){
+  app.innerHTML = `<div class="screen">
+    <div class="kicker">Última etapa</div>
+    <h2>Para onde eu envio a sua leitura?</h2>
+    <div class="hint">A sua leitura aparece logo depois daqui.</div>
+    <label class="f" for="nome">Seu nome *</label>
+    <input id="nome" autocomplete="name">
+    <label class="f" for="whats">WhatsApp com DDD *</label>
+    <input id="whats" inputmode="tel" autocomplete="tel" placeholder="(11) 99999-9999">
+    <label class="f" for="insta">@ do seu Instagram profissional *</label>
+    <input id="insta" autocapitalize="none" placeholder="@seuescritorio">
+    <div class="err" id="err"></div>
+    <div class="actions">
+      <button class="back" id="back">← voltar</button>
+      <button class="btn" id="send">Ver a minha leitura</button>
+    </div>
+    <div class="consent">Ao enviar, você concorda que a Luísa Panazzolo use estas respostas para entrar em contato com você sobre o seu diagnóstico. Seus dados não são compartilhados com ninguém.</div>
+  </div>`;
+  document.getElementById("back").onclick = () => { passo--; render(); };
+  document.getElementById("send").onclick = enviar;
+}
+
+function calcular(){
+  let total = 0;
+  PERGUNTAS.forEach(q => { if (respostas[q.id]) total += respostas[q.id].pontos; });
+  // Corte duro: não é prioridade E nunca investiu -> faixa mais baixa, seja qual for o total.
+  const corte = respostas.q10?.texto === "Não é prioridade agora" && respostas.q12?.texto === "Nunca investi";
+  const faixa = corte ? FAIXAS[FAIXAS.length-1] : FAIXAS.find(f => total >= f.min);
+  return { total, faixa, corte };
+}
+
+async function enviar(){
+  const v = id => document.getElementById(id).value.trim();
+  const nome = v("nome"), whats = v("whats").replace(/\D/g,""), insta = v("insta");
+  const err = document.getElementById("err");
+  if (nome.length < 2) return err.textContent = "Escreve o seu nome, por favor.";
+  if (whats.length < 10) return err.textContent = "Confere o WhatsApp com DDD.";
+  if (insta.replace("@","").length < 2) return err.textContent = "Coloca o @ do seu Instagram.";
+  err.textContent = "";
+  const btn = document.getElementById("send"); btn.disabled = true; btn.textContent = "Preparando a sua leitura…";
+
+  const { total, faixa, corte } = calcular();
+  const payload = {
+    data: new Date().toISOString(),
+    duracao_seg: Math.round((new Date() - inicio)/1000),
+    nome, whatsapp: whats, instagram: insta.startsWith("@") ? insta : "@"+insta,
+    pontuacao: total, faixa: faixa.nome, caminho: faixa.caminho, corte: corte ? "sim" : "não",
+    respostas: Object.fromEntries(PERGUNTAS.map(q => [q.id, (respostas[q.id]?.texto || "") + (outros[q.id] ? " — " + outros[q.id] : "")])),
+    origem: new URLSearchParams(location.search).get("origem") || "",
+  };
+
+  try{
+    if (CONFIG.PLANILHA_URL){
+      await fetch(CONFIG.PLANILHA_URL, { method:"POST", mode:"no-cors",
+        headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+    } else {
+      console.log("[modo teste] payload que iria para a planilha:", payload);
+    }
+  }catch(e){ console.warn("Falha ao enviar para a planilha", e); }
+
+  resultado(faixa, nome);
+}
+
+function resultado(f, nome){
+  passo = N + 1; bar.style.width = "100%"; count.textContent = "";
+  const primeiro = nome.split(" ")[0];
+  const espelho = ESPELHO[respostas.q5?.texto] || ESPELHO["Outra coisa"];
+  const link = CONFIG.WHATSAPP
+    ? `https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(MSG_WHATSAPP)}`
+    : "#";
+  app.innerHTML = `<div class="screen result">
+    <div class="kicker">${esc(primeiro)}, a sua leitura</div>
+    <div class="perfil">${esc(f.perfil)}</div>
+    <p class="espelho">${esc(espelho)}</p>
+    <div class="bloco"><small>A causa provável</small><p>${esc(f.causa)}</p></div>
+    <div class="bloco"><small>O que está em jogo</small><p>${esc(f.jogo)}</p></div>
+    <p>${esc(f.convite)}</p>
+    <a class="btn full" href="${link}" target="_blank" rel="noopener">${esc(f.botao)}</a>
+    <div class="fine">Abre uma conversa comigo no WhatsApp.</div>
+  </div>`;
+  window.scrollTo(0,0);
+}
+
+render();
+</script>
+</body>
+</html>
